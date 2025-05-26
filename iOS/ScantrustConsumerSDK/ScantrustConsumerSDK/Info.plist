@@ -21,9 +21,5 @@
 			</array>
 		</dict>
 	</dict>
-	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera permisson to scan the QR codes</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs location permission to identify where you are while scanning the QR codes</string>
 </dict>
 </plist>

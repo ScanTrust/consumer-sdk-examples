@@ -117,3 +117,68 @@ private func checkCameraPermission(completion: @escaping (Bool) -> Void) {
 ```
 
 By following these steps, you can successfully integrate Scantrust Web Video Auth into an iOS app using `WKWebView` and manage camera permissions effectively.
+
+## Show Custom Scan Result
+
+To create a custom scan result screen that displays product information from the Scantrust API:
+
+1. Intercept the navigation in your `WKWebView`:
+
+```swift
+func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+    if let url = navigationAction.request.url, 
+       url.absoluteString.contains("scantrust://scan-result") {
+        
+        // Extract scan ID (uid) from the URL
+        guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              let queryItems = components.queryItems,
+              let uid = queryItems.first(where: { $0.name == "uid" })?.value else {
+            decisionHandler(.cancel)
+            return
+        }
+        
+        // Present custom result view
+        let resultVC = ScanResultViewController(uid: uid, apiKey: "YOUR_API_KEY")
+        navigationController?.pushViewController(resultVC, animated: true)
+        
+        decisionHandler(.cancel)
+        return
+    }
+    
+    decisionHandler(.allow)
+}
+```
+
+2. Create a custom result view controller that fetches and displays scan data:
+
+```swift
+class ScanResultViewController: UIViewController {
+    private let uid: String
+    private let apiKey: String
+    
+    init(uid: String, apiKey: String) {
+        self.uid = uid
+        self.apiKey = apiKey
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        fetchScanResults()
+    }
+    
+    private func fetchScanResults() {
+        let urlString = "https://api.scantrust.com/api/v2/consumer/scan/\(uid)/combined-info/"
+        guard let url = URL(string: urlString) else { return }
+        
+        var request = URLRequest(url: url)
+        request.setValue(apiKey, forHTTPHeaderField: "X-ScanTrust-Consumer-Api-Key")
+        
+        URLSession.shared.dataTask(with: request) { [weak self] data, response, error in
+            // Process the response and update UI
+        }.resume()
+    }
+}
+```
+
+See the API documentation at: https://devportal.scantrust.com/docs/build-with-scantrust/consumer/scantrust-consumer-api

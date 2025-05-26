@@ -148,12 +148,12 @@
 				DEVELOPMENT_TEAM = ZHN3FM49UK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScantrustConsumerSDK/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan and verify products using Scantrust technology.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera permisson to scan the QR codes";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location permission to identify where you are while scanning the QR codes";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -178,12 +178,12 @@
 				DEVELOPMENT_TEAM = ZHN3FM49UK;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = ScantrustConsumerSDK/Info.plist;
-				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera access to scan and verify products using Scantrust technology.";
+				INFOPLIST_KEY_NSCameraUsageDescription = "This app needs camera permisson to scan the QR codes";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "This app needs location permission to identify where you are while scanning the QR codes";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
