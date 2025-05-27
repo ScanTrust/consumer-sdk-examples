@@ -129,3 +129,75 @@ private fun denyWebViewPermission() {
 ```
 
 By following these steps, you can successfully integrate Scantrust Web Video Auth into an Android app using `WebView` and manage camera permissions effectively with modern Android development practices.
+
+## 5. Show Custom Scan Result
+
+To create a custom scan result screen that displays product information from the Scantrust API:
+
+First, intercept the navigation in your WebView by implementing a WebViewClient:
+
+```kotlin
+webView.webViewClient = object : WebViewClient() {
+    override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
+        request?.url?.let { uri ->
+            if (uri.scheme == "scantrust" && uri.host == "scan-result") {
+                // Extract scan ID (uid) from the URL
+                val uid = uri.getQueryParameter("uid")
+                if (uid != null) {
+                    // Present custom result view
+                    val intent = Intent(this@MainActivity, ScanResultActivity::class.java).apply {
+                        putExtra("uid", uid)
+                        putExtra("apiKey", "YOUR_API_KEY")
+                    }
+                    startActivity(intent)
+                    return true
+                }
+            }
+        }
+        return false
+    }
+}
+```
+
+Create a custom result activity that fetches and displays scan data:
+
+```kotlin
+class ScanResultActivity : AppCompatActivity() {
+    private lateinit var uid: String
+    private lateinit var apiKey: String
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_scan_result)
+
+        uid = intent.getStringExtra("uid") ?: return
+        apiKey = intent.getStringExtra("apiKey") ?: return
+
+        fetchScanResults()
+    }
+
+    private fun fetchScanResults() {
+        val url = "https://api.scantrust.com/api/v2/consumer/scan/$uid/combined-info/"
+        val request = Request.Builder()
+            .url(url)
+            .addHeader("X-ScanTrust-Consumer-Api-Key", apiKey)
+            .build()
+
+        OkHttpClient().newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                // Handle error
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                // Process the response and update UI
+                val responseData = response.body?.string()
+                runOnUiThread {
+                    // Update UI with scan results
+                }
+            }
+        })
+    }
+}
+```
+
+See the API documentation at: https://devportal.scantrust.com/docs/build-with-scantrust/consumer/scantrust-consumer-api

@@ -8,11 +8,13 @@ import android.os.Bundle
 import android.provider.Settings
 import android.webkit.PermissionRequest
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -25,10 +27,22 @@ class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
     private var pendingPermissionRequest: PermissionRequest? = null
     
-    private val cameraPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        handleCameraPermissionResult(isGranted)
+    private lateinit var cameraPermissionLauncher: ActivityResultLauncher<String>
+    private lateinit var scanResultLauncher: ActivityResultLauncher<Intent>
+    
+    private fun setupActivityResults() {
+        cameraPermissionLauncher = registerForActivityResult(
+            ActivityResultContracts.RequestPermission()
+        ) { isGranted: Boolean ->
+            handleCameraPermissionResult(isGranted)
+        }
+        
+        scanResultLauncher = registerForActivityResult(
+            ActivityResultContracts.StartActivityForResult()
+        ) {
+            // Reload WebView when returning from ScanResultActivity
+            loadURL()
+        }
     }
     
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +56,7 @@ class MainActivity : AppCompatActivity() {
             insets
         }
         
+        setupActivityResults()
         setupWebView()
         loadURL()
         setupBackPressedCallback()
@@ -60,7 +75,20 @@ class MainActivity : AppCompatActivity() {
         webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
         
         // Set WebViewClient
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest): Boolean {
+                val url = request.url.toString()
+                if (url.startsWith("https://stc.scantrust.com/")) {
+                    // Extract parameters from URL
+                    extractScantrustParameters(url)?.let { (uid, apiKey) ->
+                        // Navigate to ScanResultActivity using the Activity Result API
+                        scanResultLauncher.launch(ScanResultActivity.createIntent(this@MainActivity, uid, apiKey))
+                        return true
+                    }
+                }
+                return false
+            }
+        }
         
         // Set WebChromeClient to handle permissions
         webView.webChromeClient = object : WebChromeClient() {
@@ -81,8 +109,36 @@ class MainActivity : AppCompatActivity() {
         }
     }
     
+
+    
     private fun loadURL() {
         webView.loadUrl("https://verify.scantrust.com/video/")
+    }
+
+    private fun extractScantrustParameters(urlString: String): Pair<String, String>? {
+        try {
+            // Parse URL with fragment-based query parameters
+            // URL format: https://stc.scantrust.com/global/#/0?uid=...&qr=...&api_key=...
+            val uri = Uri.parse(urlString)
+            val fragment = uri.fragment ?: return null
+
+            // Find the query part after #/0?
+            val queryStartIndex = fragment.indexOf("/0?")
+            if (queryStartIndex == -1) return null
+
+            val queryString = fragment.substring(queryStartIndex + 3)
+            val params = Uri.parse("dummy://dummy?$queryString")
+
+            val uid = params.getQueryParameter("uid")
+            val apiKey = params.getQueryParameter("api_key")
+
+            if (uid != null && apiKey != null) {
+                return Pair(uid, apiKey)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return null
     }
     
     private fun checkCameraPermission() {
