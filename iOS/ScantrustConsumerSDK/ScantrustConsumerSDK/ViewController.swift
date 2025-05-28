@@ -10,6 +10,26 @@ class ViewController: UIViewController, ScanResultViewControllerDelegate {
         super.viewDidLoad()
         setupWebView()
         loadURL()
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(appDidBecomeActive),
+            name: UIApplication.didBecomeActiveNotification,
+            object: nil
+        )
+    }
+
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        checkCameraPermission { _ in }
+    }
+
+    @objc private func appDidBecomeActive() {
+        checkCameraPermission { _ in }
+    }
+
+    deinit {
+        // Remove observer to avoid memory leaks
+        NotificationCenter.default.removeObserver(self, name: UIApplication.didBecomeActiveNotification, object: nil)
     }
 
     // MARK: - ScanResultViewControllerDelegate
@@ -76,24 +96,16 @@ extension ViewController: WKUIDelegate, WKNavigationDelegate {
         case .notDetermined:
             AVCaptureDevice.requestAccess(for: .video) { granted in
                 DispatchQueue.main.async {
+                    if (!granted) {
+                        self.showCameraPermissionAlert()
+                    }
                     completion(granted)
                 }
             }
         case .denied, .restricted:
             DispatchQueue.main.async {
                 // Optionally show an alert directing to Settings
-                let alert = UIAlertController(
-                    title: "Camera Access Required",
-                    message: "Please grant camera access in Settings to use this feature",
-                    preferredStyle: .alert
-                )
-                alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
-                    if let url = URL(string: UIApplication.openSettingsURLString) {
-                        UIApplication.shared.open(url)
-                    }
-                })
-                alert.addAction(UIAlertAction(title: "Cancel", style: .cancel))
-                self.present(alert, animated: true)
+                self.showCameraPermissionAlert()
                 completion(false)
             }
         @unknown default:
@@ -133,6 +145,20 @@ extension ViewController: WKUIDelegate, WKNavigationDelegate {
         }
 
         decisionHandler(.allow)
+    }
+
+    private func showCameraPermissionAlert() {
+        let alert = UIAlertController(
+            title: "Camera Access Required",
+            message: "Please grant camera access in Settings to use this feature",
+            preferredStyle: .alert
+        )
+        alert.addAction(UIAlertAction(title: "Settings", style: .default) { _ in
+            if let url = URL(string: UIApplication.openSettingsURLString) {
+                UIApplication.shared.open(url)
+            }
+        })
+        present(alert, animated: true)
     }
 
     // MARK: - URL Parameter Extraction
