@@ -11,6 +11,12 @@ These examples cover key aspects such as:
 *   Intercepting scan result URLs from the WebView to launch a custom native screen.
 *   Fetching product information from the Scantrust Consumer API based on the scan result.
 
+## Configuring Web Video Auth
+
+The examples in this repository demonstrate how to integrate Scantrust Web Video Auth. The WebViews are configured to load the following URL for this purpose:
+
+[https://verify.scantrust.com/video/](https://verify.scantrust.com/video/)
+
 ## Platform-Specific Guides
 
 For detailed integration steps and code examples tailored to each platform, please refer to the respective README files:
