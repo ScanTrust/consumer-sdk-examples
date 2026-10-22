@@ -41,6 +41,9 @@ class ViewController: UIViewController, ScanResultViewControllerDelegate {
     private func setupWebView() {
         let config = WKWebViewConfiguration()
         config.allowsInlineMediaPlayback = true
+        // Append the iPhone model so Web Video Auth can skip the phone model picker.
+        // Do not use customUserAgent, it replaces the whole User-Agent and breaks iOS detection.
+        config.applicationNameForUserAgent = "ScantrustConsumerSDK/1.0 iPhoneModel/\(deviceModelIdentifier())"
 
         webView = WKWebView(frame: view.bounds, configuration: config)
         webView.uiDelegate = self
@@ -55,6 +58,20 @@ class ViewController: UIViewController, ScanResultViewControllerDelegate {
             webView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             webView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
         ])
+    }
+
+    /// Returns the Apple model identifier, for example "iPhone15,2".
+    private func deviceModelIdentifier() -> String {
+        #if targetEnvironment(simulator)
+        if let simulatorModel = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            return simulatorModel
+        }
+        #endif
+        var systemInfo = utsname()
+        uname(&systemInfo)
+        return withUnsafeBytes(of: &systemInfo.machine) { buffer in
+            String(decoding: buffer.prefix(while: { $0 != 0 }), as: UTF8.self)
+        }
     }
 
     private func loadURL() {

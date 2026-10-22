@@ -118,6 +118,34 @@ private func checkCameraPermission(completion: @escaping (Bool) -> Void) {
 
 By following these steps, you can successfully integrate Scantrust Web Video Auth into an iOS app using `WKWebView` and manage camera permissions effectively.
 
+## 3. Pass the iPhone Model to Web Video Auth
+
+Browsers on iPhone do not expose the phone model, so Web Video Auth asks the user to pick it on the first scan. Your app already knows the exact model, so pass it in the `WKWebView` User-Agent and the user goes straight to scanning.
+
+Append `ScantrustConsumerSDK/1.0 iPhoneModel/<identifier>` to the User-Agent, where `<identifier>` is the Apple model identifier (for example `iPhone15,2`). Set it on the configuration **before** creating the `WKWebView`:
+
+```swift
+let config = WKWebViewConfiguration()
+config.applicationNameForUserAgent = "ScantrustConsumerSDK/1.0 iPhoneModel/\(deviceModelIdentifier())"
+webView = WKWebView(frame: .zero, configuration: config)
+```
+
+Read the identifier with `uname()`:
+
+```swift
+private func deviceModelIdentifier() -> String {
+    var systemInfo = utsname()
+    uname(&systemInfo)
+    return withUnsafeBytes(of: &systemInfo.machine) { buffer in
+        String(decoding: buffer.prefix(while: { $0 != 0 }), as: UTF8.self)
+    }
+}
+```
+
+> **Important:** Use `applicationNameForUserAgent`, not `customUserAgent`. `customUserAgent` replaces the whole User-Agent string and breaks iOS detection in Web Video Auth.
+
+If the identifier is missing or unknown, Web Video Auth ignores it and shows the model picker as before.
+
 ## Show Custom Scan Result
 
 To create a custom scan result screen that displays product information from the Scantrust API:
