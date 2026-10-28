@@ -65,19 +65,29 @@ Point the component at the Scantrust verification URL — `miniprogram/pages/ind
 
 ```ts
 // index.ts
+const VIDEO_AUTH_URL = 'https://verify.scantrust.cn/video/'
+
 Component({
   data: {
     title: 'Authentication Video Auth App',
-    url: 'https://verify.scantrust.cn/video/'
+    url: ''
+  },
+  lifetimes: {
+    attached() {
+      const { iphoneModel } = getApp<IAppOption>().globalData
+      this.setData({ url: iphoneModel ? `${VIDEO_AUTH_URL}?iphone-model=${iphoneModel}` : VIDEO_AUTH_URL })
+    },
   },
 })
 ```
+
+`iphoneModel` comes from `app.ts`, see [section 4](#4-pass-the-iphone-model-to-web-video-auth).
 
 `miniprogram/pages/index/index.wxml`:
 
 ```xml
 <!--index.wxml-->
-<web-view class="view" src="{{url}}"/>
+<web-view wx:if="{{url}}" class="view" src="{{url}}"/>
 ```
 
 `miniprogram/pages/index/index.wxss`:
@@ -106,7 +116,33 @@ Constraints worth knowing:
   <web-view class="view" src="{{url}}" bindload="onLoad" binderror="onError"/>
   ```
 
-## 4. Build and Run
+## 4. Pass the iPhone Model to Web Video Auth
+
+Browsers on iPhone do not expose the phone model, so Web Video Auth asks the user to pick it on the first scan. A mini program can read the model with `wx.getDeviceInfo()`, so pass it in the URL and the user goes straight to scanning.
+
+On iPhone `wx.getDeviceInfo().model` returns the display name followed by the Apple model identifier in angle brackets, for example `iPhone 13 Pro<iPhone14,2>`. Read it once on launch, extract the identifier and keep it in `globalData` — `miniprogram/app.ts`:
+
+```ts
+// app.ts
+const IPHONE_IDENTIFIER = /<(iPhone\d+,\d+)>/
+
+App<IAppOption>({
+  globalData: { iphoneModel: null },
+  onLaunch() {
+    const { model } = wx.canIUse('getDeviceInfo') ? wx.getDeviceInfo() : wx.getSystemInfoSync()
+    console.log('[iphone-model] device model:', model)
+    this.globalData.iphoneModel = (model || '').match(IPHONE_IDENTIFIER)?.[1] ?? null
+  },
+})
+```
+
+`wx.getDeviceInfo` exists from base library 2.20.1; older libraries fall back to `wx.getSystemInfoSync`. Declare the field in `typings/index.d.ts` (`iphoneModel: string | null`).
+
+The page then appends `iphone-model=<identifier>` to the verification URL (see `index.ts` in section 3). The `wx:if="{{url}}"` on the `web-view` makes the page load only once, with the final URL.
+
+If there is no identifier (Android, the DevTools simulator, or a model WeChat does not know yet), open the plain URL: Web Video Auth ignores a missing or unknown value and shows the model picker as before.
+
+## 5. Build and Run
 
 ```bash
 npm install          # installs miniprogram-api-typings for the TypeScript definitions
